@@ -1,6 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import CubicSpline
 
+# set seed
+np.random.seed(0)
 
 def natural_cubic_spline_interp(xs :np.ndarray , ys: np.ndarray, eval_xs: np.ndarray) -> np.ndarray:
     """## Interpolate using a natural cubic spline. 
@@ -124,26 +127,46 @@ def natural_cubic_spline_interp(xs :np.ndarray , ys: np.ndarray, eval_xs: np.nda
     return eval_ys
 
 
-def plot_spline(xs :np.ndarray , ys: np.ndarray, eval_xs: np.ndarray, eval_ys: np.ndarray, ground_truth: np.ndarray):
+
+
+def main():
     """Plot the spline and its nodes"""
 
-    plt.plot(xs, ys, 'o', label='spline nodes')
-    plt.plot(eval_xs, eval_ys, label='spline')
-    plt.plot(eval_xs, ground_truth, label='ground truth')
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.ylim(-2, 2)
-    plt.xlim(-4, 4)
-    plt.legend()
-    plt.show()
+    # number of nodes
+    num_nodes_list = [5, 10, 30]
+
+    # x-axis range
+    x = np.linspace(-5, 5, 1000)
+
+    # subplots
+
+    for mode in ["random", "equidistant"]:
+        fig, axs = plt.subplots(3, 1, figsize=(7, 9), sharex=True)
+        for i, num_nodes in enumerate(num_nodes_list):
+            # nodes
+            xs = np.linspace(-3, 3, num_nodes) if mode == "equidistant" else np.sort(np.random.uniform(-3, 3, size=num_nodes))
+            ys = gt_func(xs)
+            eval_xs = np.linspace(-4, 4, 1000)
+            eval_ys = natural_cubic_spline_interp(xs, ys, eval_xs)
+
+            # plot
+            axs[i].plot(eval_xs, gt_func(eval_xs), label="original", color="red")
+            axs[i].plot(xs, ys, "o", color="green")
+            axs[i].plot(eval_xs, eval_ys, label="interpolated", color="green")
+
+            axs[i].set_xlim(-4, 4)
+            axs[i].set_ylim(-2, 2)
+            # axs[i].set_title(f'Number of nodes = {num_nodes}')
+
+        axs[2].legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=4)
+
+        # Save the plot
+        fig.savefig(f"cubic_spline_jankowscy_{mode}.png", dpi=100, bbox_inches="tight")
 
 
-gt_func = lambda x: np.sin(x * np.cos(x))**2
-xs = np.linspace(-3, 3, 10)
-ys = gt_func(xs)
-eval_xs = np.linspace(-4, 4, 1000)
-eval_ys = natural_cubic_spline_interp(xs, ys, eval_xs)
-plot_spline(xs, ys, eval_xs, eval_ys, gt_func(eval_xs))
+def gt_func(x):
+    return np.sin(x * np.cos(x))**2
 
-# TODO check why the ends are different from the scipy
-# TODO check  if not-evenly spaced nodes work
+
+if __name__ == "__main__":
+    main()
